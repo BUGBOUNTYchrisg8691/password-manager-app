@@ -16,4 +16,8 @@ public interface RoleService
      * @return The Role object matching the given name
      */
     Role findByName(String name);
+    
+    Role save(Role role) throws Exception;
+    
+    void deleteAllRoles();
 }

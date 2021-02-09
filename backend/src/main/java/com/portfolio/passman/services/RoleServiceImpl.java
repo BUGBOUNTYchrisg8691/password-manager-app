@@ -35,4 +35,18 @@ public class RoleServiceImpl
             throw new EntityNotFoundException(name);
         }
     }
+    
+    @Override public Role save(Role role) throws Exception
+    {
+        if (role.getUsers().size() > 0)
+        {
+            throw new Exception("Users not updated through roles");
+        }
+        return rolerepos.save(role);
+    }
+    
+    @Override public void deleteAllRoles()
+    {
+        rolerepos.deleteAll();
+    }
 }

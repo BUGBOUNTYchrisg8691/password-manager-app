@@ -1,5 +1,6 @@
 package com.portfolio.passman.controllers;
 
+import com.portfolio.passman.models.LoginCreds;
 import com.portfolio.passman.models.User;
 import com.portfolio.passman.models.UserMinimum;
 import com.portfolio.passman.models.UserRoles;
@@ -60,44 +61,34 @@ public class Oauthendpoints
      * @return The token access and other relevent data to token access. Status of CREATED. The location header to look up the new user.
      * @throws URISyntaxException we create some URIs during this method. If anything goes wrong with that creation, an exception is thrown.
      */
-    @PostMapping(value = "/createnewuser",
-        consumes = {"application/json"},
-        produces = {"application/json"})
-    public ResponseEntity<?> addSelf(
-        HttpServletRequest httpServletRequest,
-        @Valid
-        @RequestBody
-            UserMinimum newminuser)
-        throws
-        URISyntaxException
+    @PostMapping(value = "/register", consumes = {"application/json"}, produces = {"application/json"})
+    public ResponseEntity<?> registerSelf(HttpServletRequest httpServletRequest,
+                                    @Valid @RequestBody UserMinimum newminuser) throws URISyntaxException
     {
         // Create the user
         User newuser = new User();
-
         newuser.setUsername(newminuser.getUsername());
         newuser.setPassword(newminuser.getPassword());
 
         // add the default role of user
         Set<UserRoles> newRoles = new HashSet<>();
-        newRoles.add(new UserRoles(newuser,
-            roleService.findByName("USER")));
+        newRoles.add(new UserRoles(newuser, roleService.findByName("USER")));
         newuser.setRoles(newRoles);
-
         newuser = userService.save(newuser);
 
         // set the location header for the newly created resource
         // The location comes from a different controller!
         HttpHeaders responseHeaders = new HttpHeaders();
-        URI newUserURI = ServletUriComponentsBuilder.fromUriString(httpServletRequest.getServerName() + ":" + httpServletRequest.getLocalPort() + "/users/user/{userId}")
-            .buildAndExpand(newuser.getUserid())
-            .toUri();
+        URI newUserURI = ServletUriComponentsBuilder.fromUriString(httpServletRequest.getServerName() + ":" +
+                httpServletRequest.getLocalPort() + "/users/user/{userId}").buildAndExpand(newuser.getUserid()).toUri();
+        
         responseHeaders.setLocation(newUserURI);
 
         // return the access token
         // To get the access token, surf to the endpoint /login (which is always on the server where this is running)
         // just as if a client had done this.
         RestTemplate restTemplate = new RestTemplate();
-        String requestURI = "http://localhost" + ":" + httpServletRequest.getLocalPort() + "/login";
+        String requestURI = "http://localhost" + ":" + httpServletRequest.getLocalPort() + "/oauth/token";
 
         List<MediaType> acceptableMediaTypes = new ArrayList<>();
         acceptableMediaTypes.add(MediaType.APPLICATION_JSON);
@@ -105,29 +96,53 @@ public class Oauthendpoints
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(acceptableMediaTypes);
-        headers.setBasicAuth(System.getenv("OAUTHCLIENTID"),
-            System.getenv("OAUTHCLIENTSECRET"));
+        headers.setBasicAuth(System.getenv("OAUTHCLIENTID"), System.getenv("OAUTHCLIENTSECRET"));
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("grant_type",
-            "password");
-        map.add("scope",
-            "read write trust");
-        map.add("username",
-            newminuser.getUsername());
-        map.add("password",
-            newminuser.getPassword());
+        map.add("grant_type", "password");
+        map.add("scope", "read write trust");
+        map.add("username", newminuser.getUsername());
+        map.add("password", newminuser.getPassword());
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map,
-            headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
-        String theToken = restTemplate.postForObject(requestURI,
-            request,
-            String.class);
+        String theToken = restTemplate.postForObject(requestURI, request, String.class);
 
-        return new ResponseEntity<>(theToken,
-            responseHeaders,
-            HttpStatus.CREATED);
+        return new ResponseEntity<>(theToken, responseHeaders, HttpStatus.CREATED);
+    }
+    
+    @PostMapping(value = "/login", consumes = {"application/json"}, produces = {"application/json"})
+    public ResponseEntity<?> loginSelf(HttpServletRequest request, @RequestBody LoginCreds creds)
+    {
+        HttpHeaders respHeaders = new HttpHeaders();
+        URI userUri =
+                ServletUriComponentsBuilder.fromUriString(request.getServerName() + ":" + request.getLocalPort() +
+                "/users/user/{userid}").buildAndExpand(userService.findByName(creds.getUsername()).getUserid()).toUri();
+        
+        respHeaders.setLocation(userUri);
+        
+        RestTemplate template = new RestTemplate();
+        String reqUri = "http://localhost" + ":" + request.getLocalPort() + "/oauth/token";
+        
+        List<MediaType> acceptableMediaTypes = new ArrayList<>();
+        acceptableMediaTypes.add(MediaType.APPLICATION_JSON);
+        
+        HttpHeaders reqHeaders = new HttpHeaders();
+        reqHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        reqHeaders.setAccept(acceptableMediaTypes);
+        reqHeaders.setBasicAuth(System.getenv("OAUTHCLIENTID"), System.getenv("OAUTHCLIENTSECRET"));
+        
+        MultiValueMap<String, String> reqMap = new LinkedMultiValueMap<>();
+        reqMap.add("grant_type", "password");
+        reqMap.add("scope", "read write trust");
+        reqMap.add("username", creds.getUsername());
+        reqMap.add("password", creds.getPassword());
+        
+        HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(reqMap, reqHeaders);
+        
+        String token = template.postForObject(reqUri, req, String.class);
+        
+        return new ResponseEntity<>(token, respHeaders, HttpStatus.OK);
     }
 
     /**
@@ -138,17 +153,14 @@ public class Oauthendpoints
      * @param request the Http request from which we find the authorization header which includes the token to be removed
      */
     // yes, both endpoints are mapped to the same Java method! So, either one will work.
-    @GetMapping(value = {"/oauth/revoke-token", "/logout"},
-        produces = "application/json")
+    @GetMapping(value = {"/oauth/revoke-token", "/logout"}, produces = "application/json")
     public ResponseEntity<?> logoutSelf(HttpServletRequest request)
     {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null)
         {
             // find the token
-            String tokenValue = authHeader.replace("Bearer",
-                "")
-                .trim();
+            String tokenValue = authHeader.replace("Bearer", "").trim();
             // and remove it!
             OAuth2AccessToken accessToken = tokenStore.readAccessToken(tokenValue);
             tokenStore.removeAccessToken(accessToken);

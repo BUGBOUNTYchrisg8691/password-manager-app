@@ -60,7 +60,8 @@ public class ResourceServerConfig
                 "/swagger-ui.html",
                 "/v2/api-docs",
                 "/webjars/**",
-                "/createnewuser")
+                "/login",
+                "/register")
             .permitAll()
             .antMatchers("/oauth/revoke-token",
                 "/logout")

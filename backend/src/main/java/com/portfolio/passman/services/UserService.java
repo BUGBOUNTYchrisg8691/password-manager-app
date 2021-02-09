@@ -20,4 +20,6 @@ public interface UserService
     User findByName(String name);
 
     User save(User user);
+    
+    void deleteAllUsers();
 }
