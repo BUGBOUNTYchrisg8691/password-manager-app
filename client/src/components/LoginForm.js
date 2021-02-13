@@ -67,7 +67,7 @@ const initialLoginValues = {
 };
 
 export default function LoginForm() {
-  const hist = useHistory();
+  const { push } = useHistory();
 
   return (
     <StyledContainer>
@@ -79,13 +79,13 @@ export default function LoginForm() {
           login(values.username, values.password)
             .then((res) => {
               console.log('Login Successful ==>> ', res.data);
-              localStorage.setItem('token', res.data.access_token);
-              hist.push('/dashboard');
+              // localStorage.setItem('token', res.data.access_token);
+              push('/dashboard');
             })
             .catch((err) => {
               console.log('Login Failed ==>> ', err);
               alert('login failed');
-              hist.push('/');
+              push('/');
             });
           resetForm();
           setSubmitting(false);

@@ -28,9 +28,11 @@ export const login = (username, password) => {
       if (res.data.access_token) {
         localStorage.setItem('token', res.data.access_token);
       }
+      return res;
     })
     .catch((err) => {
       console.log(`Login failed ==>> ${err.message}`);
+      return err;
     });
 };
 
