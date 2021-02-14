@@ -15,6 +15,11 @@ public class UserMinimum
      * The user's password (String)
      */
     private String password;
+    
+    /**
+     * The user's email (String)
+     */
+    private String email;
 
     /**
      * Getter for the username
@@ -55,5 +60,25 @@ public class UserMinimum
     public void setPassword(String password)
     {
         this.password = password;
+    }
+    
+    /**
+     * Getter for the email of this user
+     *
+     * @return the email (String) for this user
+     */
+    public String getEmail()
+    {
+        return email;
+    }
+    
+    /**
+     * Setter for the email
+     *
+     * @param email the new username (String) associated with this user
+     */
+    public void setEmail(String email)
+    {
+        this.email = email;
     }
 }

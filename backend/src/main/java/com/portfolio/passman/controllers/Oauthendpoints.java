@@ -69,6 +69,7 @@ public class Oauthendpoints
         User newuser = new User();
         newuser.setUsername(newminuser.getUsername());
         newuser.setPassword(newminuser.getPassword());
+        newuser.setEmail(newminuser.getEmail());
 
         // add the default role of user
         Set<UserRoles> newRoles = new HashSet<>();

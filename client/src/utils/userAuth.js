@@ -8,9 +8,9 @@ const baseAxios = () => {
   });
 };
 
-export const register = (username, password) => {
+export const register = (username, password, email) => {
   return baseAxios()
-    .post('/register', { username, password })
+    .post('/register', { username, password, email })
     .then((res) => {
       if (res.data.access_token) {
         localStorage.setItem('token', res.data.access_token);

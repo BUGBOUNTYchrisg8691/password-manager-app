@@ -40,6 +40,12 @@ public class User
     @NotNull
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+    
+    /**
+     * The email (String) for this user. Cannot be null.
+     */
+    @NotNull
+    private String email;
 
     /**
      * Part of the join relationship between user and role
@@ -142,6 +148,26 @@ public class User
     {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         this.password = passwordEncoder.encode(password);
+    }
+    
+    /**
+     * Getter for the email
+     *
+     * @return the email (String) of the user
+     */
+    public String getEmail()
+    {
+        return email;
+    }
+    
+    /**
+     * setter for email
+     *
+     * @param email the new email (String) converted to lowercase
+     */
+    public void setEmail(String email)
+    {
+        this.email = email.toLowerCase();
     }
 
     /**

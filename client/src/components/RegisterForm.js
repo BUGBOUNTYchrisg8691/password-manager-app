@@ -4,8 +4,8 @@ import styled from 'styled-components';
 import { Form, Button } from 'react-bootstrap';
 import { Formik } from 'formik';
 
-import { loginSchema } from '../schema';
-import { login } from '../utils/userAuth';
+import { registerSchema } from '../schema';
+import { register } from '../utils/userAuth';
 
 // Styled components
 const StyledContainer = styled.div`
@@ -66,17 +66,17 @@ const initialLoginValues = {
   password: '',
 };
 
-export default function LoginForm() {
+export default function RegisterForm() {
   const { push } = useHistory();
 
   return (
     <StyledContainer>
       <Formik
         initialValues={initialLoginValues}
-        validationSchema={loginSchema}
+        validationSchema={registerSchema}
         onSubmit={(values, { setSubmitting, resetForm }) => {
           setSubmitting(true);
-          login(values.username, values.password)
+          register(values.username, values.password, values.email)
             .then((res) => {
               console.log('Login Successful ==>> ', res.data);
               // localStorage.setItem('token', res.data.access_token);
@@ -135,6 +135,21 @@ export default function LoginForm() {
                 <div className="form-error-message">{errors.password}</div>
               ) : null}
             </Form.Group>
+            <Form.Group controlId="formEmail">
+              <Form.Label>Email :</Form.Label>
+              <Form.Control
+                className={touched.email && errors.email ? 'form-error' : null}
+                type="email"
+                name="email"
+                placeholder=""
+                onChange={handleChange}
+                onBlur={handleBlur}
+                value={values.email}
+              />
+              {touched.email && errors.email ? (
+                <div className="form-error-message">{errors.email}</div>
+              ) : null}
+            </Form.Group>
             <StyledButton
               variant="primary"
               type="submit"
@@ -145,8 +160,8 @@ export default function LoginForm() {
           </StyledForm>
         )}
       </Formik>
-      <a href="/register" onClick={() => push('/register')}>
-        Not signed up? Sign Up
+      <a href="/" onClick={() => push('/')}>
+        Already signed up? Sign In
       </a>
     </StyledContainer>
   );
